@@ -9,6 +9,7 @@ function App() {
   const languages = sdk?.availableLanguages ?? ["en"];
 
   const [currentLanguage, setCurrentLanguage] = useState("en");
+  const [response, setResponse] = useState<unknown>("");
 
   const handleLanguageChange = (
     event: React.ChangeEvent<HTMLSelectElement>
@@ -24,7 +25,8 @@ function App() {
     }
   };
 
-  const [response, setResponse] = useState<unknown>("");
+  console.log("chainId", chainId);
+
   const connectAndSign = async () => {
     try {
       const signResult = await sdk?.connectAndSign({
@@ -38,6 +40,35 @@ function App() {
 
   const terminate = () => {
     sdk?.terminate();
+  };
+
+  const selectedAddress = () => {
+    const selectedAddress = provider?.getSelectedAddress();
+    console.log("selectedAddress:", selectedAddress);
+  };
+
+  const transferEth = async () => {
+    const selectedAddress = provider?.getSelectedAddress();
+    const to = "0x0F887d3D24222409Ce54499d07AF594380B84D8F";
+
+    const transactionParameters = {
+      to, // Required except during contract publications.
+      from: selectedAddress, // must match user's active address.
+      value: "0x5AF3107A4000", // Only required to send ether to the recipient from the initiating external account.
+    };
+
+    try {
+      // txHash is a hex string
+      // As with any RPC call, it may throw an error
+      const txHash = (await provider?.request({
+        method: "eth_sendTransaction",
+        params: [transactionParameters],
+      })) as string;
+
+      setResponse(txHash);
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   return (
@@ -85,6 +116,22 @@ function App() {
           onClick={terminate}
         >
           Terminate
+        </button>
+
+        <button
+          className={"Button-Danger"}
+          style={{ padding: 10, margin: 10 }}
+          onClick={selectedAddress}
+        >
+          SelectedAddress
+        </button>
+
+        <button
+          className={"Button-Danger"}
+          style={{ padding: 10, margin: 10 }}
+          onClick={transferEth}
+        >
+          Transfer
         </button>
       </div>
     </div>
